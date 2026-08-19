@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>База знаний & Правила | SUNDBOX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-main: #0b0914;
+      --bg-sidebar: #06050d;a
+      --bg-card: #151124;
+      --bg-card-hover: #1f1836;
+      --border: #2d244c;
+      
+      /* Неоновая палитра Synthwave */
+      --sun-yellow: #fde047;
+      --sun-orange: #fb923c;
+      --sun-pink: #ff2a85;
+      --sun-purple: #a855f7;
+      --sun-cyan: #06b6d4;
+
+      --glow-pink: rgba(255, 42, 133, 0.4);
+      --glow-yellow: rgba(253, 224, 71, 0.3);
+      
+      --text-main: #f8fafc;
+      --text-muted: #a59cb8;
+      --kbd-bg: #231b3a;
+
+      /* Пружинные кривые Kinetics (Spring Physics) */
+      --spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --spring-bouncy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      display: flex;
+      min-height: 100vh;
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 42, 133, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 40%);
+    }
+
+    /* Боковая панель */
+    .sidebar {
+      width: 280px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .brand {
+      padding: 22px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255, 42, 133, 0.05) 0%, transparent 100%);
+    }
+
+    /* Пружинящий логотип */
+    .brand-logo-svg {
+      width: 44px;
+      height: 44px;
+      filter: drop-shadow(0 0 8px var(--sun-pink));
+      flex-shrink: 0;
+      transition: transform 0.4s var(--spring-bouncy), filter 0.4s ease;
+      cursor: pointer;
+    }
+
+    .brand-logo-svg:hover {
+      transform: scale(1.15) rotate(6deg);
+      filter: drop-shadow(0 0 16px var(--sun-pink)) drop-shadow(0 0 6px var(--sun-yellow));
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, var(--sun-yellow), var(--sun-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .brand-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    .nav-list {
+      list-style: none;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    /* Кнопки навигации с пружинным эффектом Kinetics */
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 12px 14px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.3s var(--spring-snappy), background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.3s var(--spring-snappy);
+      user-select: none;
+    }
+
+    .nav-btn:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      border-color: rgba(255, 42, 133, 0.25);
+      transform: translateX(4px);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.96);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(90deg, rgba(255, 42, 133, 0.15), rgba(168, 85, 247, 0.08));
+      color: #fff;
+      border-color: var(--sun-pink);
+      box-shadow: 0 0 16px rgba(255, 42, 133, 0.25);
+      font-weight: 600;
+      transform: translateX(4px);
+    }
+
+    /* Контент */
+    .main-content {
+      flex-grow: 1;
+      padding: 40px 60px;
+      max-width: 1060px;
+      overflow-y: auto;
+    }
+
+    .tab-pane { display: none !important; }
+    .tab-pane.active {
+      display: block !important;
+      animation: springEnter 0.4s var(--spring-smooth);
+    }
+
+    /* Пружинное открытие вкладки */
+    @keyframes springEnter {
+      0% { opacity: 0; transform: translateY(12px) scale(0.99); }
+      70% { transform: translateY(-2px) scale(1.002); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+      margin-bottom: 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid var(--sun-pink);
+      padding-left: 10px;
+    }
+
+    .section-desc { color: var(--text-muted); margin-bottom: 24px; font-size: 15px; }
+
+    /* Карточки ссылок с эффектом парения */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .link-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.4s var(--spring-snappy), border-color 0.25s ease, box-shadow 0.4s var(--spring-snappy);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .link-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--sun-yellow), var(--sun-pink));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .link-card:hover {
+      border-color: var(--sun-pink);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(255, 42, 133, 0.25);
+    }
+
+    .link-card:active {
+      transform: scale(0.98);
+    }
+
+    .link-card:hover::before { opacity: 1; }
+
+    .link-icon {
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform 0.3s var(--spring-bouncy);
+    }
+
+    .link-card:hover .link-icon {
+      transform: scale(1.15) rotate(-4deg);
+    }
+
+    .link-title { font-weight: 600; color: #fff; font-size: 15px; }
+    .link-url { font-size: 13px; color: var(--sun-pink); font-family: 'JetBrains Mono', monospace; }
+
+    /* Таблицы */
+    .table-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th {
+      background-color: rgba(255, 255, 255, 0.02);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr {
+      transition: background-color 0.2s ease;
+    }
+    tr:hover td { background-color: rgba(255, 255, 255, 0.025); }
+
+    /* Бейджи наказаний */
+    .punish-perm {
+      color: #ff4d79;
+      background: rgba(255, 42, 133, 0.15);
+      border: 1px solid rgba(255, 42, 133, 0.35);
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(255, 42, 133, 0.2);
+    }
+
+    .punish-temp {
+      color: var(--sun-yellow);
+      background: rgba(253, 224, 71, 0.12);
+      border: 1px solid rgba(253, 224, 71, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .tag-green {
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.12);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .tag-yellow {
+      color: var(--sun-orange);
+      background: rgba(251, 146, 60, 0.12);
+      border: 1px solid rgba(251, 146, 60, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    /* Клавиши <kbd> */
+    kbd {
+      background-color: var(--kbd-bg);
+      color: var(--sun-yellow);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(253, 224, 71, 0.25);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+      display: inline-block;
+      transition: transform 0.2s var(--spring-snappy);
+    }
+    kbd:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Пружинный бейдж копирования */
+    .cmd-badge {
+      background-color: rgba(255, 42, 133, 0.1);
+      color: var(--sun-pink);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px dashed var(--sun-pink);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+      transition: transform 0.3s var(--spring-bouncy), background-color 0.2s ease, box-shadow 0.3s var(--spring-snappy);
+    }
+
+    .cmd-badge:hover {
+      background-color: rgba(255, 42, 133, 0.25);
+      box-shadow: 0 0 12px var(--glow-pink);
+      transform: scale(1.06);
+    }
+
+    .cmd-badge:active {
+      transform: scale(0.92);
+    }
+
+    /* Плашки */
+    .callout {
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 18px 0;
+      display: flex;
+      gap: 14px;
+      font-size: 14px;
+      align-items: flex-start;
+      transition: transform 0.3s var(--spring-snappy);
+    }
+    .callout:hover {
+      transform: translateX(3px);
+    }
+
+    .callout-info {
+      background-color: rgba(6, 182, 212, 0.1);
+      border-left: 4px solid var(--sun-cyan);
+      color: #bae6fd;
+    }
+    .callout-warning {
+      background-color: rgba(251, 146, 60, 0.1);
+      border-left: 4px solid var(--sun-orange);
+      color: #fed7aa;
+    }
+    .callout-danger {
+      background-color: rgba(255, 42, 133, 0.1);
+      border-left: 4px solid var(--sun-pink);
+      color: #fecdd3;
+    }
+    .callout-purple {
+      background-color: rgba(168, 85, 247, 0.1);
+      border-left: 4px solid var(--sun-purple);
+      color: #e9d5ff;
+    }
+
+    .rule-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 20px;
+      transition: border-color 0.25s ease, box-shadow 0.3s ease;
+    }
+    .rule-card:hover {
+      border-color: rgba(255, 42, 133, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Шаги */
+    .steps-list {
+      list-style: none;
+      counter-reset: steps-counter;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .steps-list li {
+      counter-increment: steps-counter;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: transform 0.3s var(--spring-snappy), border-color 0.2s ease;
+    }
+    .steps-list li:hover {
+      transform: translateX(4px);
+      border-color: rgba(255, 42, 133, 0.4);
+    }
+    .steps-list li::before {
+      content: counter(steps-counter);
+      background: linear-gradient(135deg, var(--sun-yellow), var(--sun-pink));
+      color: #000;
+      font-weight: 800;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      box-shadow: 0 0 10px var(--glow-pink);
+    }
+
+    /* Toast с пружинным вылетом */
+    #toast {
+      visibility: hidden;
+      min-width: 220px;
+      background: linear-gradient(135deg, var(--sun-yellow), var(--sun-pink));
+      color: #000;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 10px;
+      padding: 12px 18px;
+      position: fixed;
+      z-index: 1000;
+      right: 30px;
+      bottom: 30px;
+      box-shadow: 0 8px 30px rgba(255, 42, 133, 0.45);
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      transition: opacity 0.3s ease, transform 0.4s var(--spring-bouncy), visibility 0.3s;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .main-content { padding: 24px 16px; }
+      .nav-list { flex-direction: row; overflow-x: auto; }
+      .nav-btn { white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Меню навигации с иконкой солнца -->
+  <aside class="sidebar">
+    <div class="brand">
+      <!-- Векторный SVG Synthwave Sun -->
+      <svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#fff566"/>
+            <stop offset="30%" stop-color="#ffbf00"/>
+            <stop offset="70%" stop-color="#ff2a85"/>
+            <stop offset="100%" stop-color="#9d00ff"/>
+          </linearGradient>
+          <mask id="sunCuts">
+            <circle cx="50" cy="50" r="48" fill="white" />
+            <rect x="0" y="44" width="100" height="2" fill="black" />
+            <rect x="0" y="50" width="100" height="2.5" fill="black" />
+            <rect x="0" y="57" width="100" height="3" fill="black" />
+            <rect x="0" y="65" width="100" height="3.5" fill="black" />
+            <rect x="0" y="74" width="100" height="4.5" fill="black" />
+            <rect x="0" y="84" width="100" height="6" fill="black" />
+          </mask>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="url(#sunGrad)" mask="url(#sunCuts)"/>
+      </svg>
+      <div>
+        <div class="brand-title">SUNDBOX</div>
+        <div class="brand-subtitle">База знаний проекта</div>
+      </div>
+    </div>
+
+    <ul class="nav-list">
+      <li><button class="nav-btn active" data-tab="tab-main">🏠 Главная и ссылки</button></li>
+      <li><button class="nav-btn" data-tab="tab-rules">📜 Правила (!rules)</button></li>
+      <li><button class="nav-btn" data-tab="tab-builder">🔨 Режим стройки (!builder)</button></li>
+      <li><button class="nav-btn" data-tab="tab-pointshop">🛍️ PointShop [F3]</button></li>
+      <li><button class="nav-btn" data-tab="tab-donate">💳 Донат и Boosty [F2]</button></li>
+    </ul>
+  </aside>
+
+  <!-- Контент -->
+  <main class="main-content">
+
+    <!-- 1. Главная -->
+    <section id="tab-main" class="tab-pane active">
+      <h1>🌅 База знаний SUNDBOX</h1>
+      <p class="section-desc">Официальные ресурсы, банлист и быстрые команды сервера.</p>
+
+      <div class="links-grid">
+        <a href="https://fenixrp.myarena.site/index.php" target="_blank" class="link-card">
+          <div class="link-icon">🌐</div>
+          <div>
+            <div class="link-title">Сайт & Банлист</div>
+            <div class="link-url">fenixrp.myarena.site</div>
+          </div>
+        </a>
+        <a href="https://fenixrp.myarena.site/rules.php" target="_blank" class="link-card">
+          <div class="link-icon">📜</div>
+          <div>
+            <div class="link-title">Веб-версия правил</div>
+            <div class="link-url">fenixrp.myarena.site/rules.php</div>
+          </div>
+        </a>
+        <a href="https://dsc.gg/sun-box" target="_blank" class="link-card">
+          <div class="link-icon">💬</div>
+          <div>
+            <div class="link-title">Discord Сервер</div>
+            <div class="link-url">dsc.gg/sun-box (вечная ссылка)</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="callout callout-info">
+        <span style="font-size: 20px;">💡</span>
+        <div><b>Подсказка:</b> Нажмите на любую команду в неоновой рамке, чтобы мгновенно скопировать её в буфер обмена.</div>
+      </div>
+
+      <h2>⌨️ Быстрые команды и клавиши</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Клавиша / Команда</th>
+              <th>Действие</th>
+              <th>Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="cmd-badge" data-copy="!rules">!rules 📋</span></td>
+              <td>Открыть правила</td>
+              <td>Внутриигровое меню с актуальным сводом правил.</td>
+            </tr>
+            <tr>
+              <td><span class="cmd-badge" data-copy="!builder">!builder 📋</span></td>
+              <td>Режим строителя</td>
+              <td>Включает режим защиты для безопасного строительства.</td>
+            </tr>
+            <tr>
+              <td><kbd>F2</kbd></td>
+              <td>Меню доната</td>
+              <td>Покупка VIP-статусов и поинтов через Boosty.</td>
+            </tr>
+            <tr>
+              <td><kbd>F3</kbd></td>
+              <td>PointShop</td>
+              <td>Магазин масок, шапок, моделей и манипринтеров.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. Правила -->
+    <section id="tab-rules" class="tab-pane">
+      <h1>📜 Правила сервера SUNDBOX</h1>
+      <p class="section-desc">
+        В игре открываются командой <span class="cmd-badge" data-copy="!rules">!rules 📋</span> или по ссылке 
+        <a href="https://fenixrp.myarena.site/rules.php" target="_blank" style="color: var(--sun-pink); text-decoration: none; font-weight: 600;">rules.php ↗</a>
+      </p>
+
+      <h2>📌 Основной свод правил (1.0 — 2.3)</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">Пункт</th>
+              <th>Формулировка правила</th>
+              <th>Наказание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>1.0</b></td>
+              <td>Запрещено обходить выданные баны.</td>
+              <td><span class="punish-perm">Permanent (без прощения и ультиматума)</span></td>
+            </tr>
+            <tr>
+              <td><b>1.1</b></td>
+              <td>Запрещено использование стороннего ПО (читов, скриптов).<br><small style="color: var(--text-muted);">*Отказ от проверки также приравнивается к читам.</small></td>
+              <td><span class="punish-perm">Permanent</span></td>
+            </tr>
+            <tr>
+              <td><b>1.2</b></td>
+              <td>Строго запрещены оскорбления, провокации и неадекватное поведение.</td>
+              <td><span class="punish-temp">1-й раз: 5 мин мута<br>Со 2-го: 30 мин бана</span></td>
+            </tr>
+            <tr>
+              <td><b>1.3</b></td>
+              <td>Нельзя флудить в чат.</td>
+              <td><span class="punish-temp">1-й раз: 5 мин мута<br>Со 2-го: 30 мин бана</span></td>
+            </tr>
+            <tr>
+              <td><b>1.4</b></td>
+              <td>Оскорбление Администрации.</td>
+              <td><span class="punish-temp">Мут до 20 мин<br>При повторном: 1 час бана</span></td>
+            </tr>
+            <tr>
+              <td><b>1.5</b></td>
+              <td>Запрещен <b>Prop Push</b> (толкание/убийство пробами).</td>
+              <td><span class="punish-temp">Бан от 20 мин<br>При повторном: 2 часа</span></td>
+            </tr>
+            <tr>
+              <td><b>1.6</b></td>
+              <td>Запрещено мешать спокойной игре.</td>
+              <td><span class="punish-temp">Бан от 5 мин<br>При повторном: 30 мин</span></td>
+            </tr>
+            <tr>
+              <td><b>1.7</b></td>
+              <td>Запрещено оскорблять сервер.</td>
+              <td><span class="punish-perm">От предупреждения до Permanent</span></td>
+            </tr>
+            <tr>
+              <td><b>1.8</b></td>
+              <td>Запрещено глумиться над игроками.</td>
+              <td><span class="punish-perm">От предупреждения до Permanent</span></td>
+            </tr>
+            <tr>
+              <td><b>1.9</b></td>
+              <td>Запрещено обманывать администрацию.</td>
+              <td><span class="punish-temp">От 1 дня бана до недели</span></td>
+            </tr>
+            <tr>
+              <td><b>2.0</b></td>
+              <td>Запрещено мешать мероприятиям (Event).</td>
+              <td><span class="punish-temp">От 1 дня бана до недели</span></td>
+            </tr>
+            <tr>
+              <td><b>2.1</b></td>
+              <td>Запрещено строиться и застраивать спавн.</td>
+              <td><span class="punish-temp">От 1 часа бана до недели</span></td>
+            </tr>
+            <tr>
+              <td><b>2.2</b></td>
+              <td>Запрещено выходить с сервера во время разборок (Leave in sit).</td>
+              <td><span class="punish-temp">От 1 дня бана до недели</span></td>
+            </tr>
+            <tr>
+              <td><b>2.3</b></td>
+              <td>Запрещено строительство в sit (на разборках).</td>
+              <td><span class="punish-temp">От предупреждения до 5 мин бана</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>🛡️ 2.4 Правила для Helper / Moderator</h2>
+      <div class="rule-card">
+        <p>• Вы можете выдавать блокировки на срок <b>до 3 месяцев</b>. Ваша основная задача — следить за порядком и обстановкой на сервере.</p>
+        <p style="margin-top: 8px;">• Если вы обнаружили игрока, нарушившего пункт со статусом <span class="punish-perm">Permanent</span>, забаньте его на <b>3 месяца</b> с причиной <code style="color: var(--sun-yellow);">"до перебана"</code> для рассмотрения высшей администрацией.</p>
+        
+        <div class="callout callout-purple" style="margin-top: 14px; margin-bottom: 0;">
+          <span style="font-size: 20px;">👑</span>
+          <div>
+            <b>Высшая наборная администрация (от Stadmin до Superadmin):</b><br>
+            Имеет полномочия выдавать наказания не по фиксированным срокам правил в зависимости от тяжести ситуации.
+          </div>
+        </div>
+      </div>
+
+      <h2>⚖️ Условия ультиматума и покупки разбана</h2>
+      <div class="rule-card">
+        <p>Если вы приобрели разбан из перманентной блокировки (<span class="punish-perm">Permanent</span>) или согласились на условия <b>ультиматума</b>, вам <u>строго запрещено</u> нарушать следующие 4 пункта:</p>
+        
+        <ul style="margin: 12px 0 12px 24px; color: var(--sun-yellow);">
+          <li><b>1.</b> Нельзя глумиться над игроками.</li>
+          <li><b>2.</b> Запрещено оскорблять Администрацию.</li>
+          <li><b>3.</b> Запрещено обманывать Администрацию.</li>
+          <li><b>4.</b> Запрещено мешать ивентам (Event).</li>
+        </ul>
+
+        <div class="callout callout-danger" style="margin-bottom: 12px;">
+          <span style="font-size: 20px;">🚨</span>
+          <div>
+            При нарушении любого из этих пунктов при активном ультиматуме вы повторно получаете <span class="punish-perm">Permanent</span>. В таком случае повторный разбан будет стоить <b>от 1000 рублей и выше</b>.
+          </div>
+        </div>
+
+        <p style="font-size: 14px; color: var(--text-muted);">
+          💡 Чтобы досрочно избавиться от условий ультиматума, можно приобрести полный разбан. Для покупки обратитесь к высшей наборной администрации.
+        </p>
+      </div>
+
+      <h2>📊 Обозначения статусов в банлисте</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Статус в банлисте</th>
+              <th>Учитывается в истории?</th>
+              <th>Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag-green">Оправдан</span></td>
+              <td><b style="color: #4ade80;">НЕТ</b></td>
+              <td>Игрок признан невиновным, блокировка снята.</td>
+            </tr>
+            <tr>
+              <td><span class="tag-green">Прощение</span></td>
+              <td><b style="color: #4ade80;">НЕТ</b></td>
+              <td>Администрация пошла навстречу и сняла бан.</td>
+            </tr>
+            <tr>
+              <td><span class="tag-yellow">Ультиматум</span></td>
+              <td><b style="color: var(--sun-pink);">ДА</b></td>
+              <td>Игрок разбанен с ограничениями и контролем.</td>
+            </tr>
+            <tr>
+              <td><span class="tag-yellow">Покупка</span></td>
+              <td><b style="color: var(--sun-pink);">ДА</b></td>
+              <td>Разбан был официально приобретен через донат.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. Режим стройки -->
+    <section id="tab-builder" class="tab-pane">
+      <h1>🔨 Режим строителя</h1>
+      <p class="section-desc">Специальный режим для безопасной и комфортной постройки.</p>
+
+      <div class="callout callout-info">
+        <span style="font-size: 20px;">💡</span>
+        <div>
+          Чтобы включить или выключить режим стройки, введите в игровой чат:
+          <br><br>
+          <span class="cmd-badge" data-copy="!builder" style="font-size: 15px;">!builder 📋 Нажмите, чтобы скопировать</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PointShop -->
+    <section id="tab-pointshop" class="tab-pane">
+      <h1>🛍️ Магазин PointShop [F3]</h1>
+      <p class="section-desc">Нажмите клавишу <kbd>F3</kbd> для открытия персонального гардероба и магазина.</p>
+
+      <h2>💰 Как фармить поинты:</h2>
+      <ol class="steps-list">
+        <li><div>Нажмите <kbd>F3</kbd>, находясь на сервере.</div></li>
+        <li><div>В верхнем меню магазина откройте вкладку <b>«Разное»</b>.</div></li>
+        <li><div>Купите <b>Money Printer</b> (Манипринтер).</div></li>
+        <li><div>Разместите его на своей базе и регулярно собирайте пассивный доход в поинтах.</div></li>
+      </ol>
+    </section>
+
+    <!-- 5. Донат -->
+    <section id="tab-donate" class="tab-pane">
+      <h1>💳 Донат и пополнение [F2]</h1>
+      <p class="section-desc">Пополнение через Boosty и покупка VIP-привилегий.</p>
+
+      <h2>Пошаговый процесс оплаты:</h2>
+      <ol class="steps-list">
+        <li><div>Нажмите <kbd>F2</kbd> в игре, чтобы открыть магазин доната.</div></li>
+        <li><div>Выберите нужный товар (VIP-статус или пакет поинтов) и нажмите <b>«Оплатить»</b>.</div></li>
+        <li><div>Оплатите через сервис <b>Boosty</b> и укажите свой ник.</div></li>
+        <li><div>Вернитесь в игру и нажмите <b>«Подтвердить оплату»</b>.</div></li>
+      </ol>
+
+      <div class="callout callout-warning">
+        <span style="font-size: 20px;">💬</span>
+        <div>
+          <b>Возникли проблемы с оплатой?</b><br>
+          Напишите администратору в Discord: <span class="cmd-badge" data-copy="warwixan">warwixan 📋</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast">Скопировано!</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Переключение табов с пружинной физикой
+      const buttons = document.querySelectorAll('.nav-btn');
+      const tabs = document.querySelectorAll('.tab-pane');
+
+      buttons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('data-tab');
+
+          buttons.forEach(b => b.classList.remove('active'));
+          tabs.forEach(t => t.classList.remove('active'));
+
+          this.classList.add('active');
+          const targetTab = document.getElementById(targetId);
+          if (targetTab) {
+            targetTab.classList.add('active');
+          }
+        });
+      });
+
+      // 2. Копирование по клику
+      const copyBadges = document.querySelectorAll('[data-copy]');
+      const toast = document.getElementById('toast');
+
+      copyBadges.forEach(function(badge) {
+        badge.addEventListener('click', function() {
+          const textToCopy = this.getAttribute('data-copy');
+          
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy);
+          } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+          }
+
+          toast.innerText = 'Скопировано: ' + textToCopy;
+          toast.classList.add('show');
+          setTimeout(() => { toast.classList.remove('show'); }, 2200);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
